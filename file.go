@@ -63,6 +63,11 @@ func (z *File) ClusterCount() uint32 {
 	return z.header.clusterCount
 }
 
+// Filename is the filename of the ZIM file on the disk.
+func (z *File) Filename() string {
+	return z.f.Name()
+}
+
 // Filesize is the filesize in Bytes of the ZIM file.
 func (z *File) Filesize() int {
 	return int(z.header.checksumPos) + md5.Size
