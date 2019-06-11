@@ -96,6 +96,9 @@ func (z *File) EntriesWithTitlePrefix(namespace Namespace, prefix []byte, limit 
 func (z *File) EntriesWithSimilarity(namespace Namespace, prefix []byte, limit int) []DirectoryEntry {
 	const maxLengthDifference = 15
 	type wasSuggested = struct{}
+	if limit <= 0 {
+		limit = defaultLimitEntries
+	}
 	var alreadySuggested = make(map[uint32]wasSuggested, limit)
 	var suggestions = make([]DirectoryEntry, 0, limit)
 	for i := 0; i < maxLengthDifference; i++ {
@@ -121,6 +124,7 @@ func (z *File) EntriesWithSimilarity(namespace Namespace, prefix []byte, limit i
 			return suggestions
 		}
 
+		// TODO: decrement by runeSize
 		prefix = prefix[:len(prefix)-1]
 	}
 
