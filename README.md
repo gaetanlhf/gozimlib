@@ -10,7 +10,7 @@ You can download a ZIM file for testing [here](https://download.kiwix.org/zim/).
 
 ## Commands
 
-The command above installs the tools of this package to the `$GOPATH/bin/`.
+The command above installs the tools of this package to `$GOPATH/bin/`.
 
 ### zimserver
 
