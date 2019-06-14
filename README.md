@@ -10,10 +10,22 @@ You can download a ZIM file for testing [here](https://download.kiwix.org/zim/).
 
 ## Commands
 
-If you want to try the `zimserver` tool, install it with `go install github.com/tim-st/go-zim/cmd/zimserver`
+The command above installs the tools of this package to the `$GOPATH/bin/`.
 
-If you want to extract sentences or texts from a Wikipedia ZIM file use `zimtext` tool, install it with `go install github.com/tim-st/go-zim/cmd/zimtext`
+### zimserver
 
-`zimindex` can create an index file for a ZIM file (currently only titles are indexed), where the file size of the index file can be controlled quite good when appropriate parameters are set.
+Tool for browsing a ZIM file in your webbrowser via an HTTP interface.
 
-You can do full text searches (union and intersection) on the ZIM file with index file using `zimsearch`. When no index file is found, the tool searches by prefix matches.
+### zimindex
+
+Tool for creating a full text index of a given ZIM file (currently only titles are indexed).
+
+### zimsearch
+
+Tool that lists search results for a given ZIM file and text query.
+If no index file created by `zimindex` is found, a builtin prefix search is used. Otherwise the index file is used to retrieve search results sorted by score, where the search result can be calculated by union or intersection operation.
+
+### zimtext
+
+Tool to extract clean texts from a Wikipedia ZIM file.
+Each clean HTML paragraph is written on a single line in a text file.
