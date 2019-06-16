@@ -18,7 +18,7 @@ Tool for browsing a ZIM file in your webbrowser via an HTTP interface.
 
 ### zimindex
 
-Tool for creating a full text index of a given ZIM file (currently only titles are indexed).
+Tool for creating a full text index of a given ZIM file.
 
 ### zimsearch
 
