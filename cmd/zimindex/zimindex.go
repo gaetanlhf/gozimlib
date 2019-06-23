@@ -38,7 +38,7 @@ func main() {
 		log.Fatal(openErr)
 	}
 
-	indexData := func(indexText bool) {
+	indexData := func(indexText bool, limit int) {
 
 		var currentPos uint32
 
@@ -100,7 +100,7 @@ func main() {
 			currentPos++
 
 			if len(batchPairs) >= 1000 {
-				index.IndexBatch(batchPairs, idLimit)
+				index.IndexBatch(batchPairs, limit)
 				// use currentPos instead of ID (both uint32)
 				if err := index.SetLastID(currentPos); err != nil {
 					log.Fatal(err)
@@ -111,7 +111,7 @@ func main() {
 		}
 
 		index.SetLastID(currentPos)
-		index.IndexBatch(batchPairs, idLimit)
+		index.IndexBatch(batchPairs, limit)
 
 		if updateErr := index.UpdateStatistics(); updateErr != nil {
 			log.Fatal(updateErr)
@@ -127,11 +127,11 @@ func main() {
 	if _, err := index.AvgCount(); err != nil {
 		// Titles never completely indexed before.
 		// Continue title indexing...
-		indexData(false)
+		indexData(false, 0)
 	}
 
 	if fullText {
-		indexData(true)
+		indexData(true, idLimit)
 	}
 
 	fmt.Println("\rFinished!")
