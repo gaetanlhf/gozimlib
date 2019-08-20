@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
@@ -73,6 +74,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 	}
 
 	var mutex sync.Mutex
+	gzWriter, _ := gzip.NewWriterLevel(nil, gzip.BestCompression)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprint("localhost:", port), http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +101,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 			// also if it doesn't exist, since it won't change.
 			w.Header().Set("Cache-Control", "max-age=87840, must-revalidate")
 
-			var namespace = zim.Namespace(r.URL.Path[zimNameLen+2])
-			switch namespace {
+			switch namespace := zim.Namespace(r.URL.Path[zimNameLen+2]); namespace {
 			case zim.NamespaceLayout, zim.NamespaceArticles, zim.NamespaceImagesFiles, zim.NamespaceImagesText:
 				var suffix = []byte(r.URL.Path[zimNameLen+4:])
 				mutex.Lock()
@@ -122,11 +123,24 @@ func StartHTTPServer(z *zim.File, port uint16) {
 						http.Error(w, blobReaderErr.Error(), http.StatusFailedDependency)
 						return
 					}
-					var mimetypeList = z.MimetypeList()
-					if int(entry.Mimetype()) < len(mimetypeList) {
+					if mimetypeList := z.MimetypeList(); int(entry.Mimetype()) < len(mimetypeList) {
 						w.Header().Set("Content-Type", mimetypeList[entry.Mimetype()])
 					}
-					io.Copy(w, blobReader)
+
+					usedGzip := false
+					switch namespace {
+					case zim.NamespaceLayout, zim.NamespaceArticles:
+						if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+							w.Header().Set("Content-Encoding", "gzip")
+							gzWriter.Reset(w)
+							io.Copy(gzWriter, blobReader)
+							gzWriter.Close()
+							usedGzip = true
+						}
+					}
+					if !usedGzip {
+						io.Copy(w, blobReader)
+					}
 					mutex.Unlock()
 					return
 				}
