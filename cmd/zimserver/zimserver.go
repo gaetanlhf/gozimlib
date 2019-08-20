@@ -99,7 +99,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 
 			// The URL now has a UUID so we can cache the result
 			// also if it doesn't exist, since it won't change.
-			w.Header().Set("Cache-Control", "max-age=87840, must-revalidate")
+			w.Header().Set("Cache-Control", "max-age=31536000, must-revalidate")
 
 			switch namespace := zim.Namespace(r.URL.Path[zimNameLen+2]); namespace {
 			case zim.NamespaceLayout, zim.NamespaceArticles, zim.NamespaceImagesFiles, zim.NamespaceImagesText:
