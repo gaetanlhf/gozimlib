@@ -7,15 +7,15 @@ import (
 
 // DirectoryEntry holds the information about a specific article, image or other object in a ZIM file.
 type DirectoryEntry struct {
-	mimetype                  Mimetype
-	parameterLen              byte
+	mimetype Mimetype
+	// parameterLen           byte
 	namespace                 Namespace
 	revision                  uint32
 	clusterNumber             uint32
 	blobNumberOrRedirectIndex uint32
 	url                       []byte
 	title                     []byte
-	//parameter     []byte    // (not used) extra parameters; see `parameterLen`
+	// parameter              []byte // (not used) extra parameters; see `parameterLen`
 }
 
 func (e *DirectoryEntry) String() string {
@@ -71,7 +71,7 @@ func (z *File) readDirectoryEntry(filePosition uint64, maxRedirects uint8) Direc
 	var result = DirectoryEntry{}
 	seek(z.f, int64(filePosition))
 	result.mimetype = Mimetype(readUint16(z.f))
-	result.parameterLen = readUint8(z.f)
+	readUint8(z.f) // skip result.parameterLen (currently not used)
 	result.namespace = Namespace(readUint8(z.f))
 	result.revision = readUint32(z.f)
 	switch result.mimetype {
