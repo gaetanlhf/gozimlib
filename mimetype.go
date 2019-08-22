@@ -1,6 +1,6 @@
 package zim
 
-import "strings"
+import "bytes"
 
 // Mimetype describes one of the three possible
 // fixed Mimetypes for a Directory Entry.
@@ -16,11 +16,11 @@ const (
 func (z *File) readMimetypeList() {
 	seek(z.f, int64(z.header.mimeListPos))
 	for {
-		var mimetype = readNullTerminatedString(z.f)
+		var mimetype = readNullTerminatedSlice(z.f)
 		if len(mimetype) == 0 {
 			break
 		}
-		z.mimetypeList = append(z.mimetypeList, strings.ToLower(strings.TrimSpace(mimetype)))
+		z.mimetypeList = append(z.mimetypeList, string(bytes.ToLower(bytes.TrimSpace(mimetype))))
 	}
 }
 

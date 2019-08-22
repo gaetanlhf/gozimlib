@@ -77,10 +77,6 @@ func readNullTerminatedSlice(f *os.File) []byte {
 	return result[:dataLen]
 }
 
-func readNullTerminatedString(f *os.File) string {
-	return string(readNullTerminatedSlice(f))
-}
-
 func (z *File) urlPointerAtPos(position uint32) uint64 {
 	seek(z.f, int64(z.header.urlPtrPos)+int64(position*8))
 	return readUint64(z.f)
