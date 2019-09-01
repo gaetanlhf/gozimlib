@@ -83,6 +83,8 @@ func StartHTTPServer(z *zim.File, port uint16) {
 				mutex.Lock()
 				favicon, faviconErr := z.Favicon()
 				mutex.Unlock()
+				w.Header().Set("Cache-Control", "max-age=900, public, must-revalidate")
+				// TODO: doesn't work for the redirect! Check Referer?
 				if faviconErr != nil {
 					log.Println(faviconErr)
 					http.NotFound(w, r)
@@ -99,7 +101,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 
 			// The URL now has a UUID so we can cache the result
 			// also if it doesn't exist, since it won't change.
-			w.Header().Set("Cache-Control", "max-age=31536000, must-revalidate")
+			w.Header().Set("Cache-Control", "max-age=31536000, public")
 
 			switch namespace := zim.Namespace(r.URL.Path[zimNameLen+2]); namespace {
 			case zim.NamespaceLayout, zim.NamespaceArticles, zim.NamespaceImagesFiles, zim.NamespaceImagesText:
@@ -112,7 +114,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 						mutex.Lock()
 						entry, _ = z.FollowRedirect(&entry)
 						mutex.Unlock()
-						http.Redirect(w, r, createURLFor(entry.Namespace(), entry.URL()), http.StatusFound)
+						http.Redirect(w, r, createURLFor(entry.Namespace(), entry.URL()), http.StatusMovedPermanently)
 						return
 					}
 					mutex.Lock()
@@ -127,20 +129,13 @@ func StartHTTPServer(z *zim.File, port uint16) {
 						w.Header().Set("Content-Type", mimetypeList[entry.Mimetype()])
 					}
 
-					usedGzip := false
+					compressor := gzWriter
 					switch namespace {
-					case zim.NamespaceLayout, zim.NamespaceArticles:
-						if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-							w.Header().Set("Content-Encoding", "gzip")
-							gzWriter.Reset(w)
-							io.Copy(gzWriter, blobReader)
-							gzWriter.Close()
-							usedGzip = true
-						}
+					case zim.NamespaceArticles, zim.NamespaceLayout:
+					default:
+						compressor = nil
 					}
-					if !usedGzip {
-						io.Copy(w, blobReader)
-					}
+					sendData(w, r, blobReader, compressor)
 					mutex.Unlock()
 					return
 				}
@@ -174,4 +169,18 @@ func htmlSuggestions(zimUUID string, results []zim.DirectoryEntry) []byte {
 	}
 	body = append(body, []byte(string("</html>"))...)
 	return body
+}
+
+// sendData writes the data from the reader to the ResponseWriter.
+// If gzWriter != nil and the request accepts gzip, the response data
+// gets compressed using the gzWriter.
+func sendData(w http.ResponseWriter, r *http.Request, reader io.Reader, gzWriter *gzip.Writer) {
+	if gzWriter != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		gzWriter.Reset(w)
+		io.Copy(gzWriter, reader)
+		gzWriter.Close()
+	} else {
+		io.Copy(w, reader)
+	}
 }
