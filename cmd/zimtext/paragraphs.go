@@ -54,7 +54,14 @@ func isValidFirstRune(r rune) bool {
 
 func isValidLastRune(r rune) bool {
 	switch r {
-	case '.', '?', '!', '"', '…', '«', '»', '›', '‹', '‘', '“', ')', '’', '”', ']':
+	case '.', '。',
+		'?', '？',
+		'!', '！',
+		'"',
+		'…', '⋯',
+		'«', '»', '›', '‹', '」', '﹂', '』',
+		'‘', '“', '’', '”',
+		')', '）', ']', '］', '】', '》', '〉':
 		return true
 	default:
 		return false
