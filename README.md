@@ -29,3 +29,10 @@ If no index file created by `zimindex` is found, a builtin prefix search is used
 
 Tool to extract clean texts from a Wikipedia ZIM file.
 Each clean HTML paragraph is written on a single line in a text file.
+
+#### Example
+
+* Extracting first 1000 clean texts from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt" -limit=1000`
+* Extracting all clean texts from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt"`
+* Extracting first 1000 clean sentences (likely a sentence) from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt" -limit=1000 -sentences`
+* Extracting all clean sentences (likely a sentence) from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt" -sentences`
