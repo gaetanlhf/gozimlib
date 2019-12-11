@@ -262,7 +262,7 @@ func WriteCleanText(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
 // and writes it to the writer if the text is likely a single sentence.
 func WriteCleanSentences(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
 	return WriteParagraphs(htmlSrc, target, func(p *Paragraph) bool {
-		return len(p.Text) >= 12 && strings.HasSuffix(p.Text, ".") && p.HasCleanText() &&
-			strings.Count(p.Text, ".") == 1 && strings.Count(p.Text, "\n") == 0
+		return len(p.Text) >= 12 && (strings.HasSuffix(p.Text, ".") || strings.HasSuffix(p.Text, "。")) && p.HasCleanText() &&
+			(strings.Count(p.Text, ".") == 1 || strings.Count(p.Text, "。") == 1) && strings.Count(p.Text, "\n") == 0
 	}, limit)
 }
