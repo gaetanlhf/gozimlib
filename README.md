@@ -20,15 +20,9 @@ Tool for browsing a ZIM file in your webbrowser via an HTTP interface.
 * Browsing the ZIM file via Web Browser is now possible at `http://localhost:8080/`
 * The last part of the URL can be used as a basic prefix search by passing the search term after the last `/` in the URL
 
-#### Example
-
 ### zimindex
 
 Tool for creating a full text index of a given ZIM file.
-
-* Starting a ZIM server at TCP port 8080: `zimserver -zim="filename.zim" -port=8080`
-* Browsing the ZIM file via Web Browser is now possible at `http://localhost:8080/`
-* The last part of the URL can be used as a basic prefix search by passing the search term after the last `/` in the URL
 
 ### zimsearch
 
