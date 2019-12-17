@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"regexp"
 
 	"github.com/tim-st/go-zim"
 )
@@ -17,16 +19,34 @@ func main() {
 	var filenameText string
 	var limit int
 	var singleSentences bool
+	var regexFilter string
 
 	flag.StringVar(&filenameZim, "zim", "", "Path to the ZIM file to read from.")
 	flag.StringVar(&filenameText, "txt", "", "Path to the text file, that is created or truncated if exists.")
 	flag.IntVar(&limit, "limit", -1, "Stop after N lines were written (where N >= limit).")
 	flag.BoolVar(&singleSentences, "sentences", false, "Only write paragraphs which are likely a single sentence.")
+	flag.StringVar(&regexFilter, "regexFilter", "", "Optional Regex to define which text should be used for your language. The input text is already clean (without HTML etc). If the string is empty, all texts are used.")
 	flag.Parse()
 
 	if flag.NFlag() < 2 || len(filenameZim) == 0 || len(filenameText) == 0 {
 		flag.PrintDefaults()
 		return
+	}
+
+	var funcWriteText func(htmlSrc io.Reader, target *bufio.Writer, limit int) int
+
+	if len(regexFilter) > 0 {
+		if regex, errRegexCompilation := regexp.Compile(regexFilter); errRegexCompilation != nil {
+			log.Fatal(errRegexCompilation)
+		} else {
+			funcWriteText = func(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
+				return WriteParagraphs(htmlSrc, target, func(p *Paragraph) bool { return regex.MatchString(p.Text) }, limit)
+			}
+		}
+	} else if singleSentences {
+		funcWriteText = WriteCleanSentences
+	} else {
+		funcWriteText = WriteCleanText
 	}
 
 	z, zimOpenErr := zim.Open(filenameZim)
@@ -100,11 +120,7 @@ func main() {
 
 			if bytes.Index(blob, []byte("<html")) >= 0 && bytes.Index(blob, []byte("</html>")) > 5 {
 				sliceReader.Reset(blob)
-				if singleSentences {
-					paragraphsWritten += WriteCleanSentences(sliceReader, bufWriter, requiredParagraphs)
-				} else {
-					paragraphsWritten += WriteCleanText(sliceReader, bufWriter, requiredParagraphs)
-				}
+				paragraphsWritten += funcWriteText(sliceReader, bufWriter, requiredParagraphs)
 			}
 		}
 
