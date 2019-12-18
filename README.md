@@ -4,7 +4,11 @@ Package `zim` implements reading support for the ZIM File Format.
 
 Documentation at <https://godoc.org/github.com/tim-st/go-zim>.
 
-Download and install package `zim` and its tools with `go get -u github.com/tim-st/go-zim/...`
+Download and install package `zim` and its tools with
+
+>`go get -u github.com/tim-st/go-zim/...`
+
+or download a prebuilt binary from the [release](https://github.com/tim-st/go-zim/releases)-section.
 
 You can download a ZIM file for testing [here](https://download.kiwix.org/zim/).
 
