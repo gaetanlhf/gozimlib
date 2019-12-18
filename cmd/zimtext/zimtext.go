@@ -40,7 +40,9 @@ func main() {
 			log.Fatal(errRegexCompilation)
 		} else {
 			funcWriteText = func(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
-				return WriteParagraphs(htmlSrc, target, func(p *Paragraph) bool { return regex.MatchString(p.Text) }, limit)
+				return WriteParagraphs(htmlSrc, target, func(p *Paragraph) bool {
+					return p.IsUsableText() && regex.MatchString(p.Text)
+				}, limit)
 			}
 		}
 	} else if singleSentences {

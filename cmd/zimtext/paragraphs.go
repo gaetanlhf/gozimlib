@@ -68,11 +68,16 @@ func isValidLastRune(r rune) bool {
 	}
 }
 
+// IsUsableText checks if the text of the paragraph seems to be a good candidate.
+func (p *Paragraph) IsUsableText() bool {
+	return len(p.Text) > 0 && !p.HasMath && !p.HasCode &&
+		!p.HasBlockquote && !p.HasQuotation && !p.HasNowikiTag &&
+		!p.HasPreTag && !p.HasOtherTags && !p.HasCiteTag && !p.HasSpanTag
+}
+
 // HasCleanText checks whether the paragraph likely has clean, readable text.
 func (p *Paragraph) HasCleanText() bool {
-	if len(p.Text) > 0 && !p.HasMath && !p.HasCode &&
-		!p.HasBlockquote && !p.HasQuotation && !p.HasNowikiTag &&
-		!p.HasPreTag && !p.HasOtherTags && !p.HasCiteTag && !p.HasSpanTag {
+	if p.IsUsableText() {
 		var lastRune, _ = utf8.DecodeLastRuneInString(p.Text)
 		if isValidLastRune(lastRune) {
 			var firstRune, _ = utf8.DecodeRuneInString(p.Text)
