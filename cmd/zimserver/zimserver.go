@@ -16,9 +16,11 @@ import (
 func main() {
 
 	var filename string
+	var hostname string
 	var port int
 
 	flag.StringVar(&filename, "filename", "", "Filename of the ZIM file to use.")
+	flag.StringVar(&hostname, "hostname", "localhost", "hostname to bind HTTP server to")
 	flag.IntVar(&port, "port", 8080, "TCP port of the HTTP server.")
 
 	flag.Parse()
@@ -31,14 +33,14 @@ func main() {
 	if z, zimOpenErr := zim.Open(filename); zimOpenErr != nil {
 		log.Fatal(zimOpenErr)
 	} else {
-		StartHTTPServer(z, uint16(port))
+		StartHTTPServer(z, hostname, uint16(port))
 	}
 
 }
 
 // StartHTTPServer starts a HTTP server at localhost with given TCP port
 // for browsing the ZIM file.
-func StartHTTPServer(z *zim.File, port uint16) {
+func StartHTTPServer(z *zim.File, hostname string, port uint16) {
 
 	var zimName = z.UUID().String()
 	var zimNameLen = len(zimName)
@@ -58,8 +60,8 @@ func StartHTTPServer(z *zim.File, port uint16) {
 	}
 
 	fmt.Println(fmt.Sprintf(
-		"Serving ZIM file at http://localhost:%d%s\n",
-		port, createURLFor(zim.NamespaceArticles, urlSuffixMainpage)))
+		"Serving ZIM file at http://%s:%d%s\n",
+		hostname, port, createURLFor(zim.NamespaceArticles, urlSuffixMainpage)))
 
 	if title := z.Title(); len(title) > 0 {
 		fmt.Println(title)
@@ -76,7 +78,7 @@ func StartHTTPServer(z *zim.File, port uint16) {
 	var mutex sync.Mutex
 	gzWriter, _ := gzip.NewWriterLevel(nil, gzip.BestCompression)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprint("localhost:", port), http.HandlerFunc(
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", hostname, port), http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 
 			if r.URL.Path == "/favicon.ico" {
