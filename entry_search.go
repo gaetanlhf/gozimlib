@@ -213,17 +213,17 @@ func (z *File) entriesWithPrefix(
 			limit = defaultLimitEntries
 		}
 		var capacity = defaultLimitEntries
-		if limit <= defaultLimitEntries {
+		if limit < defaultLimitEntries {
 			capacity = limit
 		}
 		result = make([]DirectoryEntry, 0, capacity)
 		result = append(result, entry)
-		var entriesAdded = 1
-		var lastPosition = z.header.articleCount - 1
+		entriesAdded := 1
+		lastPosition := z.header.articleCount - 1
 		for entriesAdded < limit && position < lastPosition {
 			position++
-			var nextEntry = z.readDirectoryEntry(pointerAtPosition(position), 0)
-			if !bytes.HasPrefix(chooseField(&nextEntry), prefix) {
+			nextEntry := z.readDirectoryEntry(pointerAtPosition(position), 0)
+			if nextEntry.Namespace() != namespace || !bytes.HasPrefix(chooseField(&nextEntry), prefix) {
 				break
 			}
 			result = append(result, nextEntry)
