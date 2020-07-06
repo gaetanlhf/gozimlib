@@ -226,17 +226,20 @@ func (z *File) entriesWithPrefix(chooseField chooseFieldFunc, pointerAtPosition 
 	return result
 }
 
+type foundFunc func(de *DirectoryEntry)
+type foundPosFunc func(de *DirectoryEntry, pos uint32) error
+
 // ForEachEntryWithTitlePrefix for each entry with Title prefix loop
-func (z *File) ForEachEntryWithTitlePrefix(namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+func (z *File) ForEachEntryWithTitlePrefix(namespace Namespace, prefix []byte, limit int, foundFunc foundFunc) {
 	z.forEachEntryWithPrefix(chooseTitle, z.titlePointerAtPos, namespace, prefix, limit, foundFunc)
 }
 
 // ForEachEntryWithURLPrefix for each entry with URL prefix loop
-func (z *File) ForEachEntryWithURLPrefix(namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+func (z *File) ForEachEntryWithURLPrefix(namespace Namespace, prefix []byte, limit int, foundFunc foundFunc) {
 	z.forEachEntryWithPrefix(chooseURL, z.urlPointerAtPos, namespace, prefix, limit, foundFunc)
 }
 
-func (z *File) forEachEntryWithPrefix(chooseField chooseFieldFunc, pointerAtPosition pointerAtPositionFunc, namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+func (z *File) forEachEntryWithPrefix(chooseField chooseFieldFunc, pointerAtPosition pointerAtPositionFunc, namespace Namespace, prefix []byte, limit int, foundFunc foundFunc) {
 	var entry, position, found = z.entryWithPrefix(pointerAtPosition, chooseField, namespace, prefix)
 	foundFunc(&entry)
 
@@ -247,7 +250,7 @@ func (z *File) forEachEntryWithPrefix(chooseField chooseFieldFunc, pointerAtPosi
 			position++
 
 			nextEntry := z.readDirectoryEntry(z.titlePointerAtPos(position), 0)
-			if nextEntry.Namespace() != namespace || !bytes.HasPrefix(chooseField(&nextEntry), prefix) {
+			if nextEntry.Namespace() != namespace || (prefix != nil && !bytes.HasPrefix(chooseField(&nextEntry), prefix)) {
 				break
 			}
 
@@ -255,4 +258,27 @@ func (z *File) forEachEntryWithPrefix(chooseField chooseFieldFunc, pointerAtPosi
 			entriesAdded++
 		}
 	}
+}
+
+// ForEachEntryAfterPosition run foundFunc for each entry after position
+func (z *File) ForEachEntryAfterPosition(position, limit uint32, foundFunc foundPosFunc) error {
+	entriesAdded := 1
+	lastPosition := z.header.articleCount - 1
+	useLimit := limit > 0
+
+	for {
+		if (useLimit && position > uint32(limit)) || position > lastPosition {
+			break
+		}
+
+		position++
+		nextEntry := z.readDirectoryEntry(z.titlePointerAtPos(position), 0)
+		if err := foundFunc(&nextEntry, position); err != nil {
+			return err
+		}
+
+		entriesAdded++
+	}
+
+	return nil
 }
