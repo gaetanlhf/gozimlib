@@ -158,12 +158,10 @@ func cmpPrefix(s, prefix []byte) int {
 	return bytes.Compare(s, prefix)
 }
 
-func (z *File) entryWithPrefix(
-	pointerAtPosition func(uint32) uint64,
-	chooseField func(entry *DirectoryEntry) []byte,
-	namespace Namespace,
-	prefix []byte) (
-	entry DirectoryEntry, position uint32, found bool) {
+type chooseFieldFunc func(*DirectoryEntry) []byte
+type pointerAtPositionFunc func(uint32) uint64
+
+func (z *File) entryWithPrefix(pointerAtPosition pointerAtPositionFunc, chooseField chooseFieldFunc, namespace Namespace, prefix []byte) (entry DirectoryEntry, position uint32, found bool) {
 	var firstPosition int64
 	var currentPosition int64
 	var lastPosition = int64(z.header.articleCount - 1)
@@ -200,12 +198,7 @@ func (z *File) entryWithPrefix(
 	return
 }
 
-func (z *File) entriesWithPrefix(
-	chooseField func(*DirectoryEntry) []byte,
-	pointerAtPosition func(uint32) uint64,
-	namespace Namespace,
-	prefix []byte,
-	limit int) []DirectoryEntry {
+func (z *File) entriesWithPrefix(chooseField chooseFieldFunc, pointerAtPosition pointerAtPositionFunc, namespace Namespace, prefix []byte, limit int) []DirectoryEntry {
 	var entry, position, found = z.entryWithPrefix(pointerAtPosition, chooseField, namespace, prefix)
 	var result []DirectoryEntry
 	if found {
@@ -231,4 +224,35 @@ func (z *File) entriesWithPrefix(
 		}
 	}
 	return result
+}
+
+// ForEachEntryWithTitlePrefix for each entry with Title prefix loop
+func (z *File) ForEachEntryWithTitlePrefix(namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+	z.forEachEntryWithPrefix(chooseTitle, z.titlePointerAtPos, namespace, prefix, limit, foundFunc)
+}
+
+// ForEachEntryWithURLPrefix for each entry with URL prefix loop
+func (z *File) ForEachEntryWithURLPrefix(namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+	z.forEachEntryWithPrefix(chooseURL, z.urlPointerAtPos, namespace, prefix, limit, foundFunc)
+}
+
+func (z *File) forEachEntryWithPrefix(chooseField chooseFieldFunc, pointerAtPosition pointerAtPositionFunc, namespace Namespace, prefix []byte, limit int, foundFunc func(de *DirectoryEntry)) {
+	var entry, position, found = z.entryWithPrefix(pointerAtPosition, chooseField, namespace, prefix)
+	foundFunc(&entry)
+
+	if found {
+		entriesAdded := 1
+		lastPosition := z.header.articleCount - 1
+		for entriesAdded < limit && position < lastPosition {
+			position++
+
+			nextEntry := z.readDirectoryEntry(z.titlePointerAtPos(position), 0)
+			if nextEntry.Namespace() != namespace || !bytes.HasPrefix(chooseField(&nextEntry), prefix) {
+				break
+			}
+
+			foundFunc(&nextEntry)
+			entriesAdded++
+		}
+	}
 }
