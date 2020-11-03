@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"os"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/xi2/xz"
 )
 
@@ -20,6 +21,7 @@ const (
 type File struct {
 	f            *os.File
 	xzReader     *xz.Reader
+	zstdReader   *zstd.Decoder
 	header       Header
 	metadata     map[string]string
 	mimetypeList []string
@@ -35,9 +37,14 @@ func Open(filename string) (*File, error) {
 	if xzReaderErr != nil {
 		return nil, xzReaderErr
 	}
+	var zstdReader, zstdReaderErr = zstd.NewReader(nil)
+	if zstdReaderErr != nil {
+		return nil, zstdReaderErr
+	}
 	var result = &File{
-		f:        f,
-		xzReader: xzReader,
+		f:          f,
+		xzReader:   xzReader,
+		zstdReader: zstdReader,
 	}
 	if headerErr := result.readHeader(); headerErr != nil {
 		return nil, headerErr
