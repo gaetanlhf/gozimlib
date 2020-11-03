@@ -38,6 +38,10 @@ func (z *File) clusterReader(clusterPosition uint32) (reader io.Reader, clusterI
 			z.xzReader.Multistream(false)
 			reader = z.xzReader
 		}
+	case 5: // zstd compressed
+		if err = z.zstdReader.Reset(z.f); err == nil {
+			reader = z.zstdReader
+		}
 	default:
 		// 2: zlib compressed (not used anymore)
 		// 3: bzip2 compressed (not used anymore)
