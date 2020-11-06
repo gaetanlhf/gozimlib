@@ -2,7 +2,7 @@
 
 Package `zim` implements reading support for the ZIM File Format.
 
-Documentation at <https://godoc.org/github.com/tim-st/go-zim>.
+Documentation at <https://pkg.go.dev/github.com/tim-st/go-zim>.
 
 Download and install package `zim` and its tools with
 
