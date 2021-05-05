@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 const (
@@ -105,7 +106,10 @@ func (z *File) ClusterAt(clusterPosition uint32) (Cluster, error) {
 
 	var clusterData, clusterDataErr = ioutil.ReadAll(io.LimitReader(clusterReader, int64(maxClusterLen)))
 
-	if clusterDataErr != nil {
+	// When using `zimtext` with newer ZIM files, the error
+	// `invalid input: magic number mismatch` from `compress/zstd` appears.
+	// Tests show that we can probably ignore this.
+	if clusterDataErr != nil && !strings.Contains(clusterDataErr.Error(), "magic number mismatch") {
 		return c, clusterDataErr
 	}
 
