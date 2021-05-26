@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -72,7 +73,7 @@ func isValidLastRune(r rune) bool {
 func (p *Paragraph) IsUsableText() bool {
 	return len(p.Text) > 0 && !p.HasMath && !p.HasCode &&
 		!p.HasBlockquote && !p.HasQuotation && !p.HasNowikiTag &&
-		!p.HasPreTag && !p.HasOtherTags && !p.HasCiteTag && !p.HasSpanTag
+		!p.HasPreTag && !p.HasOtherTags && !p.HasSpanTag
 }
 
 // HasCleanText checks whether the paragraph likely has clean, readable text.
@@ -117,6 +118,9 @@ func skipStartTag(tokenizer *html.Tokenizer, tagName string) (finished bool, las
 	}
 	return
 }
+
+var reReferences = regexp.MustCompile(`\[\d{1,}\]`)
+var reMultiBlanks = regexp.MustCompile(`[[:blank:]]{2,}`)
 
 // WriteParagraphs writes the text within HTML paragraphs of the source Reader to the target Writer
 // if the takeParagraph function returns true for the given paragraph.
@@ -203,7 +207,20 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 							case "q":
 								currentParagraph.HasQuotation = true
 							case "span":
-								currentParagraph.HasSpanTag = true
+								var isReference = false
+								for _, a := range token.Attr {
+									if a.Key == "class" {
+										if strings.Contains(a.Val, "reference") || strings.Contains(a.Val, "reflink") {
+											isReference = true
+										}
+										break
+									}
+								}
+								if isReference {
+									currentParagraph.HasCiteTag = true
+								} else {
+									currentParagraph.HasSpanTag = true
+								}
 							case "sub":
 								currentParagraph.HasSubscript = true
 							case "sup":
@@ -217,20 +234,28 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 					} else if tokenType == html.EndTagToken {
 						var token = tokenizer.Token()
 						if token.Data == "p" {
-							currentParagraph.Text = strings.TrimSpace(currentParagraph.Text)
-							if len(currentParagraph.Text) > 0 {
+							texts := strings.Split(currentParagraph.Text, "\n")
+							for _, text := range texts {
+								currentParagraph.Text = strings.TrimSpace(text)
+
 								if takeParagraph(&currentParagraph) {
-									if _, err := target.WriteString(currentParagraph.Text); err != nil {
-										log.Fatal(err)
-									}
-									target.WriteByte('\n')
-									paragraphsWritten += strings.Count(currentParagraph.Text, "\n") + 1
-									if paragraphsWritten >= limit {
-										return paragraphsWritten
+									currentParagraph.Text = reReferences.ReplaceAllLiteralString(currentParagraph.Text, "")
+									currentParagraph.Text = reMultiBlanks.ReplaceAllLiteralString(currentParagraph.Text, " ")
+									currentParagraph.Text = strings.TrimSpace(currentParagraph.Text)
+									if len(currentParagraph.Text) >= 25 {
+										if _, err := target.WriteString(currentParagraph.Text); err != nil {
+											log.Fatal(err)
+										}
+										target.WriteByte('\n')
+										paragraphsWritten += 1
+										if paragraphsWritten >= limit {
+											return paragraphsWritten
+										}
 									}
 								}
-								currentParagraph = Paragraph{}
+
 							}
+							currentParagraph = Paragraph{}
 							break
 						}
 					} else if tokenType == html.ErrorToken {
@@ -267,7 +292,7 @@ func WriteCleanText(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
 // and writes it to the writer if the text is likely a single sentence.
 func WriteCleanSentences(htmlSrc io.Reader, target *bufio.Writer, limit int) int {
 	return WriteParagraphs(htmlSrc, target, func(p *Paragraph) bool {
-		return len(p.Text) >= 12 && (strings.HasSuffix(p.Text, ".") || strings.HasSuffix(p.Text, "。")) && p.HasCleanText() &&
-			(strings.Count(p.Text, ".") == 1 || strings.Count(p.Text, "。") == 1) && strings.Count(p.Text, "\n") == 0
+		return (strings.HasSuffix(p.Text, ".") || strings.HasSuffix(p.Text, "。")) && p.HasCleanText() &&
+			(strings.Count(p.Text, ".") == 1 || strings.Count(p.Text, "。") == 1)
 	}, limit)
 }
