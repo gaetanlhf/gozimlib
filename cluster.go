@@ -15,7 +15,13 @@ const (
 )
 
 func clusterOffsetSize(clusterInformation uint8) uint8 {
-	return 4 << ((clusterInformation & 16) >> 4)
+	/*
+	if (b & 0b0001_0000) == 0b0001_0000 {
+        	return 8
+    	}
+    	return 4
+	*/
+	return ((clusterInformation >> 2) & 4) + 4
 }
 
 func clusterCompression(clusterInformation uint8) uint8 {
