@@ -4,20 +4,19 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"os"
 )
 
 func blobReader(clusterReader io.Reader, offsetSize int64, blobPosition uint32) (
 	reader io.Reader, blobSize int64, err error) {
 
-	var file, clusterReaderIsFile = clusterReader.(*os.File)
+	var seeker, clusterReaderIsSeeker = clusterReader.(io.Seeker)
 
 	var thisBlobIndex = int64(blobPosition) * offsetSize
 
 	// seek to position where we get the relevant start and end positions of the blob
-	if clusterReaderIsFile {
+	if clusterReaderIsSeeker {
 		var newOffset int64
-		newOffset, err = file.Seek(thisBlobIndex, 1)
+		newOffset, err = seeker.Seek(thisBlobIndex, 1)
 		blobSize = newOffset - thisBlobIndex
 	} else {
 		_, err = io.CopyN(ioutil.Discard, clusterReader, thisBlobIndex)
@@ -45,8 +44,8 @@ func blobReader(clusterReader io.Reader, offsetSize int64, blobPosition uint32) 
 	}
 
 	// seek to the position of blob data start
-	if clusterReaderIsFile {
-		seek(file, blobSize+thisBlobPointer)
+	if clusterReaderIsSeeker {
+		seeker.Seek(blobSize+thisBlobPointer, 0)
 	} else {
 		var alreadyRead = thisBlobIndex + 2*offsetSize
 		_, err = io.CopyN(ioutil.Discard, clusterReader, thisBlobPointer-alreadyRead)
