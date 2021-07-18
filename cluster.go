@@ -1,6 +1,7 @@
 package zim
 
 import (
+	"compress/bzip2"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -16,10 +17,10 @@ const (
 
 func clusterOffsetSize(clusterInformation uint8) uint8 {
 	/*
-	if (b & 0b0001_0000) == 0b0001_0000 {
-        	return 8
-    	}
-    	return 4
+			if (clusterInformation & 0b0001_0000) == 0b0001_0000 {
+		        	return 8
+		    	}
+		    	return 4
 	*/
 	return ((clusterInformation >> 2) & 4) + 4
 }
@@ -40,6 +41,8 @@ func (z *File) clusterReader(clusterPosition uint32) (reader io.Reader, clusterI
 	switch compression {
 	case 0, 1: // uncompressed
 		reader = z.f
+	case 3: // bzip2 compressed
+		reader = bzip2.NewReader(z.f)
 	case 4: // xz compressed
 		if err = z.xzReader.Reset(z.f); err == nil {
 			z.xzReader.Multistream(false)
@@ -51,7 +54,6 @@ func (z *File) clusterReader(clusterPosition uint32) (reader io.Reader, clusterI
 		}
 	default:
 		// 2: zlib compressed (not used anymore)
-		// 3: bzip2 compressed (not used anymore)
 		err = errors.New("zim: unsupported cluster compression")
 	}
 	return
