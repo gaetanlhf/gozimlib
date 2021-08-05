@@ -24,7 +24,7 @@ func TestClusterAt(t *testing.T) {
 				break
 			}
 
-			if bytes.Index(blob, []byte("<html")) >= 0 && bytes.Index(blob, []byte("</html>")) > 0 {
+			if bytes.Contains(blob, []byte("<html")) && bytes.Index(blob, []byte("</html>")) > 0 {
 				numberHTMLFiles++
 			}
 		}

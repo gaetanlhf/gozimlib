@@ -22,11 +22,11 @@ func TestMainPage(t *testing.T) {
 		t.Errorf("Directory Entry of z.MainPage() has length %d; want %d\n", blobLen, expectedDataLen)
 	}
 	var expectedMainPageURL = []byte("index.htm")
-	if bytes.Compare(mainPageEntry.url, expectedMainPageURL) != 0 {
+	if !bytes.Equal(mainPageEntry.url, expectedMainPageURL) {
 		t.Errorf("URL of Directory Entry from z.MainPage() was `%s`; want `%s`\n", mainPageEntry.url, expectedMainPageURL)
 	}
 	var expectedMainPageTitle = []byte("Summary")
-	if bytes.Compare(mainPageEntry.title, expectedMainPageTitle) != 0 {
+	if !bytes.Equal(mainPageEntry.title, expectedMainPageTitle) {
 		t.Errorf("Title of Directory Entry from z.MainPage() was `%s`; want `%s`\n", mainPageEntry.title, expectedMainPageTitle)
 	}
 	if mainPageEntry.namespace != NamespaceArticles {
@@ -82,7 +82,7 @@ func TestRedirects(t *testing.T) {
 		t.Error(redirectError)
 	}
 	var expectedTargetURL = []byte("Orbite_héliosynchrone.html")
-	if bytes.Compare(targetEntry.url, expectedTargetURL) != 0 {
+	if !bytes.Equal(targetEntry.url, expectedTargetURL) {
 		t.Errorf("Target Directory Entry has URL `%s`; want `%s`", targetEntry.url, expectedTargetURL)
 	}
 }
@@ -171,7 +171,7 @@ func TestEntryLookupAndPositions(t *testing.T) {
 			t.Errorf("Wrong entry found by URL lookup for %s: %s\n", entry.String(), entry1.String())
 		}
 
-		if bytes.Compare(entry.URL(), entry1.URL()) != 0 {
+		if !bytes.Equal(entry.URL(), entry1.URL()) {
 			t.Errorf("Wrong entry found by URL lookup for %s: %s\n", entry.String(), entry1.String())
 		}
 
@@ -184,7 +184,7 @@ func TestEntryLookupAndPositions(t *testing.T) {
 			t.Errorf("Wrong entry found by URL lookup for %s: %s\n", entry.String(), entry2.String())
 		}
 
-		if bytes.Compare(entry.URL(), entry2.URL()) != 0 {
+		if !bytes.Equal(entry.URL(), entry2.URL()) {
 			t.Errorf("Wrong entry found by URL lookup for %s: %s\n", entry.String(), entry2.String())
 		}
 
@@ -202,7 +202,7 @@ func TestEntryLookupAndPositions(t *testing.T) {
 			t.Errorf("Wrong entry found by URL position lookup for %s: %s\n", entry.String(), entry3.String())
 		}
 
-		if bytes.Compare(entry.URL(), entry3.URL()) != 0 {
+		if !bytes.Equal(entry.URL(), entry3.URL()) {
 			t.Errorf("Wrong entry found by URL position lookup for %s: %s\n", entry.String(), entry3.String())
 		}
 
