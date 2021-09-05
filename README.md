@@ -43,6 +43,7 @@ Each clean HTML paragraph is written on a single line in a text file.
 * Extracting first 1000 clean sentences (likely a sentence) from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt" -limit=1000 -sentences`
 * Extracting all clean sentences (likely a sentence) from a ZIM file: `zimtext -zim="filename.zim" -txt="lines.txt" -sentences`
 * If you want to support your language or use-case better, it's recommended to define your own Regular Expression to extract only texts you accept. The RE-Syntax is defined [here](https://github.com/google/re2/wiki/Syntax) and can be tested [here](https://regex101.com/) (select Flavor=_Golang_).
+* **If your language or version doesn't work (yields an empty file), see [here](https://github.com/tim-st/go-zim/issues/7#issuecomment-913113149) how to get it working.**
 
 Example:
 > `zimtext -zim="wikipedia_de_top_nopic_2019-08.zim" -txt="de.txt" -limit=10000 -regexFilter="^(?:\p{Lu}|\p{N})[ \pL\pN\,\;\:\-]{10,}[\.\)\]\?\"…«»›‹‘“’”]{1}$"`
