@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -67,64 +66,47 @@ func main() {
 
 	var paragraphsWritten = 0
 
-	var sliceReader = bytes.NewReader(nil)
+	var printProgress func(int)
 
-	var printProgress func(clusterPosition uint32)
+	articleCount := z.ArticleCount()
 
 	if limit > 0 {
-		printProgress = func(clusterPosition uint32) {
-			if clusterPosition%4 == 0 {
+		printProgress = func(int) {
+			if paragraphsWritten%32 == 0 {
 				fmt.Printf("\r%.1f%%", (float32(paragraphsWritten)/float32(limit))*100)
 			}
 		}
 	} else {
-		limit = int(^uint(0) >> 1)
-		printProgress = func(clusterPosition uint32) {
-			if clusterPosition%16 == 0 {
-				fmt.Printf("\r%.1f%%", (float32(clusterPosition)/float32(z.ClusterCount()))*100)
+		limit = int((^uint(0)) >> 1)
+		printProgress = func(idx int) {
+			if idx%32 == 0 {
+				fmt.Printf("\r%.1f%%", (float32(idx)/float32(articleCount))*100)
 			}
 		}
 	}
 
-	defer func() {
-		fmt.Print("\r100.0%")
-		bufWriter.Flush()
-		txtFile.Close()
-	}()
-
-	for clusterPosition := uint32(0); clusterPosition < z.ClusterCount(); clusterPosition++ {
-
-		printProgress(clusterPosition)
-
-		var cluster, clusterErr = z.ClusterAt(clusterPosition)
-
-		if clusterErr != nil {
+	for idx := uint32(0); idx < articleCount; idx++ {
+		printProgress(int(idx))
+		var requiredParagraphs = limit - paragraphsWritten
+		if requiredParagraphs <= 0 || paragraphsWritten >= limit {
+			break
+		}
+		entry, err := z.EntryAtURLPosition(idx)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if entry.Namespace() != zim.NamespaceArticles {
 			continue
 		}
-
-		if !cluster.WasCompressed() {
+		blobReader, blobSize, err := z.BlobReaderAt(entry.ClusterNumber(), entry.BlobNumber())
+		_ = blobSize
+		if err != nil {
 			continue
 		}
-
-		for blobPosition := uint32(0); ; blobPosition++ {
-
-			var requiredParagraphs = limit - paragraphsWritten
-
-			if requiredParagraphs <= 0 || paragraphsWritten >= limit {
-				return
-			}
-
-			var blob, blobErr = cluster.BlobAt(blobPosition)
-
-			if blobErr != nil {
-				break
-			}
-
-			if bytes.Index(blob, []byte("<html")) >= 0 && bytes.Index(blob, []byte("</html>")) > 5 {
-				sliceReader.Reset(blob)
-				paragraphsWritten += funcWriteText(sliceReader, bufWriter, requiredParagraphs)
-			}
-		}
-
+		paragraphsWritten += funcWriteText(blobReader, bufWriter, requiredParagraphs)
 	}
+
+	bufWriter.Flush()
+	txtFile.Close()
+	fmt.Print("\r100.0%")
 }

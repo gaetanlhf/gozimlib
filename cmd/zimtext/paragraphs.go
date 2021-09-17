@@ -113,7 +113,6 @@ func skipStartTag(tokenizer *html.Tokenizer, tagName string) (finished bool, las
 			if lastError == io.EOF {
 				break
 			}
-			log.Println(lastError)
 		}
 	}
 	return
@@ -139,7 +138,6 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 			if err == io.EOF {
 				return paragraphsWritten
 			}
-			log.Println(err)
 		} else if tokenType == html.StartTagToken {
 			var token = tokenizer.Token()
 			if token.Data == "p" {
@@ -168,7 +166,6 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 								if lastError == io.EOF {
 									return paragraphsWritten
 								}
-								log.Println(lastError)
 							}
 						} else {
 							switch token.Data {
@@ -263,7 +260,6 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 						if err == io.EOF {
 							return paragraphsWritten
 						}
-						log.Println(err)
 					}
 				}
 			} else if token.Data == "table" || token.Data == "blockquote" || token.Data == "q" {
@@ -273,7 +269,6 @@ func WriteParagraphs(htmlSrc io.Reader, target *bufio.Writer, takeParagraph func
 					if lastError == io.EOF {
 						return paragraphsWritten
 					}
-					log.Println(lastError)
 				}
 			}
 		}
