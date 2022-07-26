@@ -1,4 +1,4 @@
-module github.com/JojiiOfficial/go-zim
+module github.com/gaetanlhf/gozimlib
 
 go 1.14
 
